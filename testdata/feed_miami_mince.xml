@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0">
+  <channel>
+    <title>Miami Mince Podcast</title>
+    <item>
+      <guid>miami-01</guid>
+      <title>Miami Mince—Yule Regret It 01: 'Eggnog'</title>
+      <enclosure url="https://example.com/mm1.mp3" type="audio/mpeg"/>
+    </item>
+    <item>
+      <guid>miami-02</guid>
+      <title>Miami Mince—Yule Regret it 02: 'Holly'</title>
+      <enclosure url="https://example.com/mm2.mp3" type="audio/mpeg"/>
+    </item>
+  </channel>
+</rss>

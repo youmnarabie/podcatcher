@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0">
+  <channel>
+    <title>Prefix Number Podcast</title>
+    <item>
+      <guid>pn-03</guid>
+      <title>03 Working for the Washington Brothers</title>
+      <enclosure url="https://example.com/pn3.mp3" type="audio/mpeg"/>
+    </item>
+    <item>
+      <guid>pn-3</guid>
+      <title>3 Working for the Washington Brothers</title>
+      <enclosure url="https://example.com/pn3b.mp3" type="audio/mpeg"/>
+    </item>
+  </channel>
+</rss>
