@@ -1,11 +1,11 @@
 # Podcatcher Design
-_2026-03-16_
+_2026-03-16, updated 2026-03-17_
 
 ## Overview
 
 A self-hosted pod catcher, RSS feed reader, and podcast player with advanced series detection and filtering. The primary problem it solves: podcast feeds that publish multiple named sub-series non-chronologically, with inconsistent naming, and RSS metadata that cannot be relied on for series identification.
 
-Initial delivery is a POC web app. A native iOS app is a future milestone that the API design must not preclude.
+Initial delivery is a POC web app. A native iOS app and multi-user support are future milestones that the API design must not preclude. See `2026-03-17-podcatcher-prd.md` for the full product requirements.
 
 ---
 
@@ -93,7 +93,7 @@ series_episodes                   -- resolved series-episode mapping
   episode_number        int
   is_manual_override    bool not null default false
   created_at            timestamptz not null default now()
-  unique(episode_id)              -- one series per episode
+  unique(series_id, episode_id)   -- one row per series-episode pair (episode can belong to many series)
 
 playback_state
   id                    uuid primary key
@@ -106,7 +106,9 @@ playback_state
 **Key decisions:**
 - `episodes.guid` is the RSS `<guid>` field — deduplication key on re-fetch
 - `raw_season` / `raw_episode_number` preserve RSS metadata without trusting it
-- `series_episodes.is_manual_override = true` prevents the poller from ever re-assigning that episode
+- An episode can belong to multiple series — `series_episodes` rows are additive; auto-detection never removes existing rows
+- `series_episodes.is_manual_override = true` on a specific row prevents the poller from ever removing or replacing that particular series assignment
+- Auto-detection only adds new `series_episodes` rows; it never touches rows where `is_manual_override = true`
 - `playback_state` is upserted on every position update from the player
 - No user auth in POC — single-user assumed
 
@@ -128,17 +130,21 @@ GET    /api/v1/opml/export                download OPML file
 # Episodes
 GET    /api/v1/episodes                   list episodes
                                           ?feed_id=&series_id=&played=true|false
+                                          ?sort=published_at|duration|title
+                                          ?order=asc|desc
+                                          ?date_from=&date_to=   (ISO 8601)
                                           ?limit=&offset=
 GET    /api/v1/episodes/{id}
+GET    /api/v1/episodes/{id}/playback     get playback state
 
 # Series
 GET    /api/v1/feeds/{id}/series          list series for a feed
 POST   /api/v1/feeds/{id}/series          create series manually { name }
 PATCH  /api/v1/series/{id}               rename series { name }
 
-# Series-episode assignment
-PUT    /api/v1/episodes/{id}/series       manually assign { series_id, episode_number }
-DELETE /api/v1/episodes/{id}/series       remove assignment
+# Series-episode assignment (additive — does not replace existing assignments)
+POST   /api/v1/episodes/{id}/series       add series membership { series_id, episode_number }
+DELETE /api/v1/episodes/{id}/series/{series_id}   remove specific series assignment
 
 # Feed rules
 GET    /api/v1/feeds/{id}/rules
@@ -167,13 +173,17 @@ Custom player component (not native `<audio>` defaults):
 
 ## Views
 
-| View | Filter |
+| View | Description |
 |---|---|
-| All Episodes | Flat reverse-chron list across all feeds |
+| All Episodes | Flat list across all feeds |
 | By Show | Episodes grouped by feed |
 | By Series | Episodes grouped by series within a feed |
 | Unplayed | Episodes where `completed = false` |
 | Played | Episodes where `completed = true` |
+
+**Sorting** (available in all views): publish date (default: newest first), duration, title (alphabetical).
+
+**Filtering** (composable across all views): feed, series, played/unplayed state, date range.
 
 Played/unplayed filter is composable with show and series views.
 
@@ -190,12 +200,15 @@ Played/unplayed filter is composable with show and series views.
 ### Integration tests — real Postgres via Docker, no network
 - Feed CRUD and rule management
 - Episode ingest + auto series assignment end-to-end
-- Manual override survives re-fetch (`is_manual_override` respected)
+- Episode can be assigned to multiple series; auto-detection does not remove manual assignments
+- Manual override survives re-fetch (`is_manual_override` respected per row)
 - Playback state upsert and retrieval
 
 ### Acceptance tests — full stack over HTTP against a running test server
 - Add feed → episodes appear → series detected correctly
+- Episode can be assigned to multiple series via API
 - Manual series assignment survives re-fetch
+- Sorting and filtering parameters return correct episode subsets
 - Played/unplayed filter returns correct episodes
 - OPML round-trip: import then export produces equivalent feed list
 - On-demand refresh (`POST /feeds/{id}/refresh`) triggers ingest
@@ -238,10 +251,13 @@ Played/unplayed filter is composable with show and series views.
 
 ## Out of Scope for POC
 
-- User authentication / multi-user
+The following are deferred to later milestones — not ruled out. See the PRD for the full roadmap.
+
+- User authentication / multi-user (Milestone 2)
+- Social sign-in (Milestone 2)
+- Native iOS app (Milestone 3)
 - Push notifications
-- iOS app
 - Chapter support
 - Sleep timer
 - Queue management
-- Episode search / full-text
+- Full-text episode search
