@@ -1,0 +1,6 @@
+DROP TABLE IF EXISTS playback_state;
+DROP TABLE IF EXISTS series_episodes;
+DROP TABLE IF EXISTS series;
+DROP TABLE IF EXISTS episodes;
+DROP TABLE IF EXISTS feed_rules;
+DROP TABLE IF EXISTS feeds;
