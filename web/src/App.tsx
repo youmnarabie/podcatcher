@@ -1,121 +1,49 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import heroImg from './assets/hero.png'
-import './App.css'
+// web/src/App.tsx
+import { Route, Routes, NavLink } from 'react-router-dom';
+import FeedList from './components/FeedList';
+import EpisodeList from './components/EpisodeList';
+import SeriesNav from './components/SeriesNav';
+import Player from './components/Player';
+import { usePlayer } from './hooks/usePlayer';
+import { api } from './api';
+import type { Episode } from './types';
 
-function App() {
-  const [count, setCount] = useState(0)
+export default function App() {
+  const player = usePlayer();
+
+  const handlePlay = async (ep: Episode) => {
+    let startPos = 0;
+    try {
+      const pb = await api.getPlayback(ep.ID);
+      if (!pb.Completed) startPos = pb.PositionSeconds;
+    } catch {}
+    player.play(ep, startPos);
+  };
 
   return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
-        </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.tsx</code> and save to test <code>HMR</code>
-          </p>
-        </div>
-        <button
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
-        </button>
-      </section>
-
-      <div className="ticks"></div>
-
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
-        </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
-
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
-  )
+    <div style={{ maxWidth: 900, margin: '0 auto', padding: 16, paddingBottom: 80 }}>
+      <nav style={{ marginBottom: 16, display: 'flex', gap: 16 }}>
+        <NavLink to="/">All Episodes</NavLink>
+        <NavLink to="/feeds">Shows</NavLink>
+        <NavLink to="/unplayed">Unplayed</NavLink>
+      </nav>
+      <Routes>
+        <Route path="/" element={<EpisodeList onPlay={handlePlay} />} />
+        <Route path="/feeds" element={<FeedList />} />
+        <Route path="/feeds/:feedId/episodes" element={
+          <><SeriesNav /><EpisodeList onPlay={handlePlay} /></>
+        } />
+        <Route path="/feeds/:feedId/series/:seriesId" element={
+          <><SeriesNav /><EpisodeList onPlay={handlePlay} /></>
+        } />
+        <Route path="/unplayed" element={<EpisodeList played={false} onPlay={handlePlay} />} />
+      </Routes>
+      <Player
+        episode={player.episode} playing={player.playing}
+        position={player.position} duration={player.duration} speed={player.speed}
+        onToggle={player.togglePlay} onSeek={player.seek}
+        onSpeedChange={player.setPlaybackSpeed}
+      />
+    </div>
+  );
 }
-
-export default App
