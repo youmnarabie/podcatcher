@@ -487,7 +487,10 @@ export default function SearchResults({ onPlay }: Props) {
         <section>
           <h3>Episodes</h3>
           {episodes.map(ep => (
-            <EpisodeItem key={ep.ID} episode={ep} onPlay={onPlay} />
+            <div key={ep.ID}>
+              <small style={{ color: '#888' }}>{ep.FeedTitle}</small>
+              <EpisodeItem episode={ep} onPlay={onPlay} />
+            </div>
           ))}
         </section>
       )}
