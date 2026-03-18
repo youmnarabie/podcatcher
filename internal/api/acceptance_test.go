@@ -218,6 +218,17 @@ func TestSearchEndpoint(t *testing.T) {
 		t.Fatalf("expected episodes array with results, got: %v", result["Episodes"])
 	}
 
+	firstEp, ok := episodes[0].(map[string]any)
+	if !ok {
+		t.Fatal("expected episode to be an object")
+	}
+	if firstEp["Title"] != "UniqueAcceptanceTitleZZZ" {
+		t.Fatalf("expected episode Title %q, got %v", "UniqueAcceptanceTitleZZZ", firstEp["Title"])
+	}
+	if _, ok := firstEp["FeedTitle"]; !ok {
+		t.Fatal("expected FeedTitle field in episode result")
+	}
+
 	feeds, ok := result["Feeds"].([]any)
 	if !ok {
 		t.Fatal("expected feeds array in response")
