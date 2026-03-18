@@ -4,6 +4,8 @@ import FeedList from './components/FeedList';
 import EpisodeList from './components/EpisodeList';
 import SeriesNav from './components/SeriesNav';
 import Player from './components/Player';
+import SearchBar from './components/SearchBar';
+import SearchResults from './components/SearchResults';
 import { usePlayer } from './hooks/usePlayer';
 import { api } from './api';
 import type { Episode } from './types';
@@ -26,6 +28,7 @@ export default function App() {
         <NavLink to="/">All Episodes</NavLink>
         <NavLink to="/feeds">Shows</NavLink>
         <NavLink to="/unplayed">Unplayed</NavLink>
+        <SearchBar />
       </nav>
       <Routes>
         <Route path="/" element={<EpisodeList onPlay={handlePlay} />} />
@@ -37,6 +40,7 @@ export default function App() {
           <><SeriesNav /><EpisodeList onPlay={handlePlay} /></>
         } />
         <Route path="/unplayed" element={<EpisodeList played={false} onPlay={handlePlay} />} />
+        <Route path="/search" element={<SearchResults onPlay={handlePlay} />} />
       </Routes>
       <Player
         episode={player.episode} playing={player.playing}
