@@ -60,14 +60,15 @@ Types defined in `internal/store/search.go`. `Episode` is an exported **value ty
 ```go
 type EpisodeWithFeed struct {
     Episode
-    FeedTitle string `json:"feed_title"`
+    FeedTitle string
 }
 
 type SearchResult struct {
-    Episodes []*EpisodeWithFeed `json:"episodes"`
-    Feeds    []*Feed            `json:"feeds"`
+    Episodes []*EpisodeWithFeed
+    Feeds    []*Feed
 }
 ```
+No json tags — consistent with all other store types (`Episode`, `Feed`, etc.). Go's default marshaller outputs PascalCase keys, matching the TypeScript types.
 
 **`internal/api/search.go`**
 
@@ -140,13 +141,16 @@ Props: `onPlay: (ep: Episode) => void`
 **`web/src/api.ts`** — new method added to the `api` object (same pattern as existing methods):
 ```ts
 search: (q: string) =>
-  client.get<{ episodes: EpisodeWithFeed[]; feeds: Feed[] }>(`/search?q=${encodeURIComponent(q)}`).then(r => r.data),
+  client.get<{ Episodes: EpisodeWithFeed[]; Feeds: Feed[] }>(`/search?q=${encodeURIComponent(q)}`).then(r => r.data),
 ```
 `q` received here is the decoded value from `useSearchParams` — `encodeURIComponent` here is correct and there is no double-encoding (axios does not re-encode URL strings passed as raw string paths).
+
+Response keys are PascalCase (`Episodes`, `Feeds`) matching Go's default marshaller output.
 
 **`web/src/types.ts`** — new type:
 ```ts
 export interface EpisodeWithFeed extends Episode {
-  feed_title: string;
+  FeedTitle: string;
 }
 ```
+PascalCase, consistent with all other fields in `types.ts`.
