@@ -1,4 +1,4 @@
-import { useSearchParams } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { api } from '../api';
 import type { Episode } from '../types';
@@ -45,7 +45,7 @@ export default function SearchResults({ onPlay }: Props) {
           <h3>Shows</h3>
           {feeds.map(f => (
             <div key={f.ID} style={{ borderBottom: '1px solid #eee', padding: '8px 0' }}>
-              <a href={`/feeds/${f.ID}/episodes`}>{f.Title ?? f.URL}</a>
+              <Link to={`/feeds/${f.ID}/episodes`}>{f.Title ?? f.URL}</Link>
             </div>
           ))}
         </section>

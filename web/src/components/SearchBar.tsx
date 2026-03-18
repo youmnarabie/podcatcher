@@ -27,6 +27,7 @@ export default function SearchBar() {
     <input
       type="search"
       placeholder="Search episodes & shows…"
+      aria-label="Search episodes and shows"
       value={value}
       onChange={e => setValue(e.target.value)}
       style={{ marginLeft: 'auto' }}

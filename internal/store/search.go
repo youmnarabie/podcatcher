@@ -28,6 +28,8 @@ func (s *Store) Search(ctx context.Context, query string) (*SearchResult, error)
 	pattern := "%" + query + "%"
 	g, ctx := errgroup.WithContext(ctx)
 
+	// episodes and feeds are written exclusively by their respective goroutines
+	// and are only safe to read after g.Wait() returns.
 	var episodes []*EpisodeWithFeed
 	var feeds []*Feed
 
@@ -35,7 +37,7 @@ func (s *Store) Search(ctx context.Context, query string) (*SearchResult, error)
 		rows, err := s.db.Query(ctx, `
 			SELECT e.id, e.feed_id, e.guid, e.title, e.description, e.audio_url,
 			       e.duration_seconds, e.published_at, e.raw_season, e.raw_episode_number,
-			       e.created_at, f.title
+			       e.created_at, COALESCE(f.title, '') AS feed_title
 			FROM episodes e
 			JOIN feeds f ON f.id = e.feed_id
 			WHERE e.title ILIKE $1 OR e.description ILIKE $1
