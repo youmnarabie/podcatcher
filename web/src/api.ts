@@ -1,6 +1,6 @@
 // web/src/api.ts
 import axios from 'axios';
-import type { Episode, EpisodeListParams, Feed, FeedRule, PlaybackState, Series } from './types';
+import type { Episode, EpisodeListParams, EpisodeWithFeed, Feed, FeedRule, PlaybackState, Series } from './types';
 
 const client = axios.create({ baseURL: '/api/v1' });
 
@@ -36,4 +36,6 @@ export const api = {
   deleteRule: (id: string) => client.delete(`/rules/${id}`),
 
   exportOPML: () => client.get('/opml/export', { responseType: 'blob' }),
+  search: (q: string) =>
+    client.get<{ Episodes: EpisodeWithFeed[]; Feeds: Feed[] }>(`/search?q=${encodeURIComponent(q)}`).then(r => r.data),
 };

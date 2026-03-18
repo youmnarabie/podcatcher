@@ -25,3 +25,6 @@ export interface EpisodeListParams {
   date_from?: string; date_to?: string;
   limit?: number; offset?: number;
 }
+export interface EpisodeWithFeed extends Episode {
+  FeedTitle: string;
+}
