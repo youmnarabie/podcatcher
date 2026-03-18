@@ -1,4 +1,5 @@
 import { defineConfig } from '@playwright/test';
+import * as path from 'path';
 
 export default defineConfig({
   testDir: '.',
@@ -7,6 +8,7 @@ export default defineConfig({
   },
   webServer: {
     command: 'go run ./cmd/server',
+    cwd: path.join(__dirname, '..'),
     url: 'http://localhost:8080',
     reuseExistingServer: !process.env.CI,
     env: {
