@@ -28,7 +28,7 @@ func TestSearch_EpisodeTitleMatch(t *testing.T) {
 	t.Cleanup(func() { s.DeleteFeed(ctx, feed.ID) })
 	_ = s.UpdateFeedMeta(ctx, feed.ID, "Test Show", "", "")
 
-	ep, err := s.UpsertEpisode(ctx, &store.Episode{
+	_, err := s.UpsertEpisode(ctx, &store.Episode{
 		FeedID:   feed.ID,
 		GUID:     "search-test-title-1",
 		Title:    "UniqueEpisodeTitleXYZ",
@@ -37,7 +37,6 @@ func TestSearch_EpisodeTitleMatch(t *testing.T) {
 	if err != nil {
 		t.Fatalf("UpsertEpisode: %v", err)
 	}
-	_ = ep
 
 	result, err := s.Search(ctx, "UniqueEpisodeTitleXYZ")
 	if err != nil {
@@ -48,6 +47,9 @@ func TestSearch_EpisodeTitleMatch(t *testing.T) {
 	}
 	if result.Episodes[0].Title != "UniqueEpisodeTitleXYZ" {
 		t.Fatalf("expected title %q got %q", "UniqueEpisodeTitleXYZ", result.Episodes[0].Title)
+	}
+	if result.Episodes[0].FeedTitle != "Test Show" {
+		t.Fatalf("expected FeedTitle %q got %q", "Test Show", result.Episodes[0].FeedTitle)
 	}
 }
 

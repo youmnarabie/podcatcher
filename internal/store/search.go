@@ -1,3 +1,4 @@
+// internal/store/search.go
 package store
 
 import (
@@ -17,16 +18,18 @@ type SearchResult struct {
 }
 
 func (s *Store) Search(ctx context.Context, query string) (*SearchResult, error) {
-	result := &SearchResult{
-		Episodes: make([]*EpisodeWithFeed, 0),
-		Feeds:    make([]*Feed, 0),
-	}
 	if query == "" {
-		return result, nil
+		return &SearchResult{
+			Episodes: make([]*EpisodeWithFeed, 0),
+			Feeds:    make([]*Feed, 0),
+		}, nil
 	}
 
 	pattern := "%" + query + "%"
 	g, ctx := errgroup.WithContext(ctx)
+
+	var episodes []*EpisodeWithFeed
+	var feeds []*Feed
 
 	g.Go(func() error {
 		rows, err := s.db.Query(ctx, `
@@ -42,6 +45,7 @@ func (s *Store) Search(ctx context.Context, query string) (*SearchResult, error)
 			return err
 		}
 		defer rows.Close()
+		var eps []*EpisodeWithFeed
 		for rows.Next() {
 			var ewf EpisodeWithFeed
 			if err := rows.Scan(
@@ -52,9 +56,13 @@ func (s *Store) Search(ctx context.Context, query string) (*SearchResult, error)
 			); err != nil {
 				return err
 			}
-			result.Episodes = append(result.Episodes, &ewf)
+			eps = append(eps, &ewf)
 		}
-		return rows.Err()
+		if err := rows.Err(); err != nil {
+			return err
+		}
+		episodes = eps
+		return nil
 	})
 
 	g.Go(func() error {
@@ -67,6 +75,7 @@ func (s *Store) Search(ctx context.Context, query string) (*SearchResult, error)
 			return err
 		}
 		defer rows.Close()
+		var fs []*Feed
 		for rows.Next() {
 			var f Feed
 			if err := rows.Scan(
@@ -75,13 +84,25 @@ func (s *Store) Search(ctx context.Context, query string) (*SearchResult, error)
 			); err != nil {
 				return err
 			}
-			result.Feeds = append(result.Feeds, &f)
+			fs = append(fs, &f)
 		}
-		return rows.Err()
+		if err := rows.Err(); err != nil {
+			return err
+		}
+		feeds = fs
+		return nil
 	})
 
 	if err := g.Wait(); err != nil {
 		return nil, err
 	}
-	return result, nil
+
+	if episodes == nil {
+		episodes = make([]*EpisodeWithFeed, 0)
+	}
+	if feeds == nil {
+		feeds = make([]*Feed, 0)
+	}
+
+	return &SearchResult{Episodes: episodes, Feeds: feeds}, nil
 }
