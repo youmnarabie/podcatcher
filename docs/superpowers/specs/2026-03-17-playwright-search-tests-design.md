@@ -29,7 +29,7 @@ using the Playwright binary already installed in `web/node_modules`.
 import { defineConfig } from '@playwright/test';
 
 export default defineConfig({
-  testDir: './e2e',
+  testDir: '.',
   use: {
     baseURL: 'http://localhost:8080',
   },
@@ -40,6 +40,7 @@ export default defineConfig({
     env: {
       DATABASE_URL: process.env.DATABASE_URL ?? '',
       ADDR: ':8080',
+      MIGRATIONS_PATH: 'migrations', // relative to repo root (where playwright is invoked from)
     },
   },
 });
@@ -89,9 +90,10 @@ e2e/
 Seed helper (`e2e/seed/main.go`):
 - Reads `DATABASE_URL` from env
 - Creates feed with URL `https://e2e-test.example/feed.rss`
-- Calls `UpdateFeedMeta` to set title `"E2E Test Show"`
-- Upserts episode with title `"E2E Unique Episode"`, feed ID
+- Calls `UpdateFeedMeta` to set title `"E2E Test Show"`, empty description and imageURL
+- Upserts episode with: `FeedID`, `GUID: "e2e-ep-1"`, `Title: "E2E Unique Episode"`, `AudioURL: "https://e2e-test.example/ep.mp3"` — all required non-null fields
 - Prints `{"feedID": "...", "episodeID": "..."}` to stdout
+- `execSync("go run ./e2e/seed")` inherits `process.env` so `DATABASE_URL` is automatically available to the child process
 
 Cleanup helper (`e2e/cleanup/main.go`):
 - Reads `DATABASE_URL` and `FEED_ID` from env
