@@ -46,6 +46,8 @@ func New(s *store.Store, ing *ingester.Ingester) *Server {
 
 		r.Post("/opml/import", srv.opmlImport)
 		r.Get("/opml/export", srv.opmlExport)
+
+		r.Get("/search", srv.search)
 	})
 
 	srv.router = r

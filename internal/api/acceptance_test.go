@@ -179,3 +179,50 @@ func TestOPMLExport(t *testing.T) {
 		t.Errorf("expected application/xml, got %q", ct)
 	}
 }
+
+func TestSearchEndpoint(t *testing.T) {
+	ts, s := testServer(t)
+	ctx := context.Background()
+
+	feed, _ := s.CreateFeed(ctx, "https://search-acceptance.example/feed.rss")
+	t.Cleanup(func() { s.DeleteFeed(ctx, feed.ID) })
+	_ = s.UpdateFeedMeta(ctx, feed.ID, "Acceptance Show", "", "")
+
+	_, err := s.UpsertEpisode(ctx, &store.Episode{
+		FeedID:   feed.ID,
+		GUID:     "search-acceptance-ep-1",
+		Title:    "UniqueAcceptanceTitleZZZ",
+		AudioURL: "https://example.com/acc.mp3",
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	resp, err := http.Get(ts.URL + "/api/v1/search?q=UniqueAcceptanceTitleZZZ")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != 200 {
+		t.Fatalf("expected 200, got %d", resp.StatusCode)
+	}
+
+	var result map[string]any
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		t.Fatalf("decode: %v", err)
+	}
+
+	episodes, ok := result["Episodes"].([]any)
+	if !ok || len(episodes) == 0 {
+		t.Fatalf("expected episodes array with results, got: %v", result["Episodes"])
+	}
+
+	feeds, ok := result["Feeds"].([]any)
+	if !ok {
+		t.Fatal("expected feeds array in response")
+	}
+	if len(feeds) != 0 {
+		t.Fatalf("expected 0 feed results (feed title doesn't match), got %d", len(feeds))
+	}
+}
